@@ -1,0 +1,156 @@
+---
+title: "Trabajo Bloque Modelo Lineales"
+author: "J. Morales"
+date: "4-05-2023"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+::: {style="text-align: justify"}
+# Trabajo
+
+Documento para la elaboración del trabajo correspondiente al bloque de modelos lineales. Antes de ver los contenidos del trabajo se cargan todas las librerías necesarias para su elaboración.
+:::
+
+```{r librerias,echo=TRUE,error=FALSE,warning=FALSE,message=FALSE}
+# librerias estándar para tratamiento de datos
+library(tidyverse)
+library(tidymodels)
+library(stringr)
+library(forcats)
+library(lubridate)
+library(magrittr)
+library(broom)
+library(pubh)
+library(lmtest)
+library(MASS)
+library(kableExtra)
+library(mosaic)
+library(moonBook)
+library(sjlabelled)
+library(sjPlot)
+library(reshape2)
+library(olsrr)
+library(ggfortify)
+library(mgcv)
+library(modelr)
+library(alr4)
+library(gridExtra)
+```
+
+```{r}
+# Configuración entorno gráfico
+theme_set(theme_sjplot2())
+```
+
+::: {style="text-align: justify"}
+# Trabajo
+
+A continuación se presentan los bancos de datos que se utilizarán apra el desarrollo del trabajo así como un guión de los contenidos a desarrollar para cada uno de ellos. Cada banco de datos se acompaña de una pequeña descripción del problema así como el detalle de todas las características o variables consideradas. El trabajo se puede desarrolalr en parejas y se deben completar la máximo el análisis de todos los bancos de datos. Se deberá entregar un fichero rmd tanto con el código utilizado así como los comentarios de los análisis y conclusiones. Para finalizar el trabajo se realizará una presentación de 10 minutos de los resultados obtenidos.
+:::
+
+::: {style="text-align: justify"}
+## Airfoil
+
+Conjunto de datos de la NASA, obtenidos a partir de una serie de ensayos aerodinámicos y acústicos de secciones bidimensionales y tridimensionales de palas aerodinámicas realizados en un túnel de viento anecoico. El objetivo que se persigue es conocer el nivel de presión sonora registardo en función de diferentes modificaciones del tunel de viento. El conjunto de datos comprende perfiles aerodinámicos NACA 0012 de diferentes tamaños a varias velocidades y ángulos de ataque en el túnel de viento. La envergadura del perfil y la posición del observador fueron las mismas en todos los experimentos. Las variables registradas en el experimento son:
+
+1.  **Frecuency**: Frecuencia, en hercios.
+2.  **Angle**: Ángulo de ataque, en grados.
+3.  **Chord**: Longitud de cuerda, en metros.
+4.  **Velocity**: Velocidad de la corriente libre, en metros por segundo.
+5.  **Suction**: Espesor de desplazamiento del lado de aspiración, en metros.
+6.  **Sound**: Nivel de presión sonora escalado, en decibelios.
+
+Lectura del banco de datos:
+
+```{r}
+url <- "https://raw.githubusercontent.com/jmsocuellamos/DatosBIOTEC/master/CaseStudies/Airfoil/airfoil_self_noise.csv"
+airfoil<-read.csv(url,header=TRUE)
+```
+:::
+
+::: {style="text-align: justify"}
+Cuestiones de interés:
+
+-   Realiza un análisis gráfico adecuado en función de la información aportada en el banco de datos tomando como variable respuesta el nivel de presión sonora. A la vista de dicho análisis establece un modelo de partida para tratar de explicar el comportamiento de `sound` en dunción del conjunto de variables predictoras.
+-   Escribe la ecuación correspondiente a ese modelo de partida e interpreta los coeficientes de dicho modelo ¿qué variables incrementan el nivel sonoro y cuales la disminuyen?
+-   Utiliza el proceso de selección de variables que consideres más adecuado para el problema en cuestión y obtén el mejor modelo posible. Interpreta de nuevo la ecuación del modelo resultante.
+-   Realiza el proceso de diagnóstico del modelo obtenido en el apartado anterior, y si es necesario modifica dicho modelo de acuerdo a los resultados obtenidos. Si tras el diagnóstico el modelo del punto anterior ha variado de alguna forma interpreta de nuevo los parámetros de dicho modelo.
+-   A través del modelo de predicción correspondiente del punto anterior identifica los rango de las predictoras donde el volumen de sound es más pequeño.
+:::
+
+::: {style="text-align: justify"}
+## Beijing
+
+Este conjunto de datos incluye datos horarios de contaminantes atmosféricos procedentes de 12 puntos de vigilancia de la calidad del aire controlados a escala nacional. Los datos proceden del Centro Municipal de Vigilancia Medioambiental de Pekín. Los datos meteorológicos de cada sitio de calidad del aire se corresponden con la estación meteorológica más cercana de la Administración Meteorológica de China. El periodo de tiempo va del 1 de marzo de 2013 al 28 de febrero de 2017. Los datos que faltan se indican como NA. Los datos completos se componen de 12 ficheros (uno por cada punto de vigilancia). Cada banco de datos contiene un conjunto de variables que registran los diferentes tipos de contaminantes:
+
+**Variables identificadoras de la localización de la toma de datos**
+
+1.  **No**: número de fila
+2.  **year**: año de los datos de esta fila
+3.  **month**: mes de los datos de esta fila
+4.  **day**: día de los datos de esta fila
+5.  **hour**: hora de los datos de esta fila
+
+**Variables del nivel de los diferentes contaminantes**
+
+6.  **PM2.5**: concentración de PM2.5 (ug/m\^3)
+7.  **PM10**: concentración de PM10 (ug/m\^3)
+8.  **SO2**: Concentración de SO2 (ug/m\^3)
+9.  **NO2**: Concentración de NO2 (ug/m\^3)
+10. **CO**: concentración de CO (ug/m\^3)
+11. **O3**: Concentración de O3 (ug/m\^3)
+
+**Variables ambientales**
+
+12. **TEMP**: temperatura (grados Celsius)
+13. **PRES**: presión (hPa)
+14. **DEWP**: temperatura del punto de rocío (grados Celsius)
+15. **RAIN**: precipitación (mm)
+16. **wd**: dirección del viento
+17. **WSPM**: velocidad del viento (m/s)
+
+**Localidad del registro**
+
+18. **station**: nombre del lugar de control de la calidad del aire
+
+Para facilitar el trabajo de análisis trabajrremos únicamente con tres de las 12 localidades. Cargamos la infromación de cada localidad por separado y las juntamos en una única base de datos.
+
+```{r}
+loc02<-read.csv("https://raw.githubusercontent.com/jmsocuellamos/DatosBIOTEC/master/CaseStudies/Beijing/PRSA_Data_Changping_20130301-20170228.csv",header=TRUE)
+loc03<-read.csv("https://raw.githubusercontent.com/jmsocuellamos/DatosBIOTEC/master/CaseStudies/Beijing/PRSA_Data_Dingling_20130301-20170228.csv",header=TRUE)
+loc11<-read.csv("https://raw.githubusercontent.com/jmsocuellamos/DatosBIOTEC/master/CaseStudies/Beijing/PRSA_Data_Wanliu_20130301-20170228.csv",header=TRUE)
+contaminacion <-rbind(loc02, loc03, loc11)
+```
+
+Eliminamos de la base de datos todos lo registros con algún valor perdido (missing) para alguna de las variables, para obtener un conjunto de datos más compacto. Centraremos nuestro análisis en el contaminante $O3$ por loq ueelinaremos todas las variables que nos son necesarias para los análisis.
+
+```{r}
+# Eliminación de valores pérdidos
+contaminacion<-contaminacion[complete.cases(contaminacion),]
+# Selección de varaibles de interés
+variables <-c("month", "O3", "TEMP", "PRES", "DEWP", "RAIN", "WSPM", "station")
+contaminF <- contaminacion[,variables]
+```
+
+Para evitar problemas de escalas se recomienda transformar la variable $O3$ mediate el logartimo neperiano y utilizar dicha variable para las diferentes modelidaciones que vamos a abordar. Se plantean dos modelos diferentes: en el primer interviene la varaible `month` y en el segundo interviene la variable `station`. Deseamos analizar de forma independiente si resulta más relevante el mes de la toma de datos que la localidad donde se toman para estudiar el nivel de $O3$.
+
+Modelo para `month`
+
+1.  Convierte la varaible `month` y realiza un análisis gráfico preliminar donde se visualize el comportamiento del contaminate con respecto a las variables climáticas teniendo en cuenta el mes de la toma de datos. Extrae las conclusiones pertinentes a la vista de dicha información.
+2.  Construye un modelo inicial teniendo en cuenta las variable climáticas y el mes de la toma de datos para explicar el comportamiento de $O3$. Interpreta los resultados obtenidos.
+3.  Seleciona el mejor modelo tomando como punto de partida el modelo del punto anterior y extrae las conclusiones pertinentes.
+4.  Realiza el diagnóstico del modelo anterior y si fuera necesario propón un modelo alternativo.
+5.  Establece el rango de valores de las predictoras donde el nivel de $O3$ es más bajo teniendo en cuenta si dichos valores vienen determinados por el mes de la toma de datos.
+
+Modelo para `station`
+
+1.  Convierte la variable `station` y realiza un análisis gráfico preliminar donde se visualize el comportamiento del contaminate con respecto a las variables climáticas teniendo en cuenta la localidad de la toma de datos. Extrae las conclusiones pertinentes a la vista de dicha información.
+2.  Construye un modelo inicial teniendo en cuenta las variable climáticas y la localidad de la toma de datos para explicar el comportamiento de $O3$. Interpreta los resultados obtenidos.
+3.  Seleciona el mejor modelo tomando como punto de partida el modelo del punto anterior y extrae las conclusiones pertinentes.
+4.  Realiza el diagnóstico del modelo anterior y si fuera necesario propón un modelo alternativo.
+5.  Establece el rango de valores de las predictoras donde el nivel de $O3$ es más bajo teniendo en cuenta si dichos valores vienen determinados por la localidad de la toma de datos.
+
+¿Cómo podemos comparar los resultados de ambos modelos? ¿Consideras más relevante el mes o la localidad? Justifica todas tus respuestas. Si al modelo con el mes de la toma de datos le añadimos de forma aditiva la localidad de la toma de datos, ¿mejora o empeora el modelo? Justifica tus respuestas
+:::
