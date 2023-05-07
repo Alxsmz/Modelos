@@ -8,7 +8,7 @@ output:
 ---
 
 ::: {style="text-align: justify"}
-# Trabajo
+# Trabajo1
 
 Documento para la elaboración del trabajo correspondiente al bloque de modelos lineales. Antes de ver los contenidos del trabajo se cargan todas las librerías necesarias para su elaboración.
 :::
